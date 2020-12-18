@@ -10,7 +10,7 @@ use Swoft\SwoftComponent;
  *
  * @since 2.0
  */
-class AutoLoader extends SwoftComponent
+class AutoLoader extends \Swoft\Pgsql\AutoLoader
 {
     /**
      * @return array
