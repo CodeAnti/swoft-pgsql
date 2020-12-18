@@ -1,13 +1,12 @@
 <?php
 namespace CodeAnti\Swoft\Pgsql;
 
-
 /**
- * Class Pgsql
+ * Class PgsqlDb
  *
  * @since 2.0
  */
-class Pgsql extends \Swoft\Pgsql\Pgsql
+class PgsqlDb extends  \Swoft\Pgsql\PgsqlDb
 {
 
 }
