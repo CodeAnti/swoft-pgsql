@@ -48,7 +48,7 @@ class Model
      */
     public function query()
     {
-        return new QueryBuilder($this->pgsql->createConnection());
+        return (new QueryBuilder($this->pgsql->createConnection()))->setModel($this);
     }
 
     /**
