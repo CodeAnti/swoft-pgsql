@@ -12,7 +12,7 @@
         "ext-ctype": "*",
         "ext-mbstring": "*",
         "doctrine/inflector": "v1.2.0",
-        "cheney70/swoft-pgsql": "dev-master"
+        "cheney70/swoft-pgsql": "~1.0.0"
     },
     "require-dev": {
         "php": ">=7.0.0"

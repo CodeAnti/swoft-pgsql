@@ -4,11 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2073bc94c343bba9f901512d4e3ab02a",
+    "content-hash": "1db3a723ee59ab8eedeaad2c9b83983c",
     "packages": [
         {
             "name": "cheney70/swoft-pgsql",
-            "version": "dev-master",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cheney70/swoft-pgsql.git",
@@ -270,9 +270,7 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {
-        "cheney70/swoft-pgsql": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
