@@ -5,7 +5,7 @@ use ReflectionException;
 use Swoft\Connection\Pool\Contract\ConnectionInterface;
 use Swoft\Pgsql\Connection\Connection;
 
-class QueryBuilder
+class Builder
 {
     /**
      * @var Connection 
