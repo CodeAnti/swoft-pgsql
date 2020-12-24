@@ -1,6 +1,7 @@
 <?php
 namespace CodeAnti\Swoft\Pgsql\Eloquent;
 
+use ReflectionException;
 use Swoft\Connection\Pool\Contract\ConnectionInterface;
 use Swoft\Pgsql\Connection\Connection;
 
@@ -16,7 +17,7 @@ class QueryBuilder
      *
      * @var array
      */
-    public $columns;
+    public $columns = ['*'];
 
 
     /**
@@ -32,6 +33,11 @@ class QueryBuilder
      * @var Model
      */
     public $model;
+
+    /**
+     * The Select Conditions
+     */
+    public $where;
 
 
     /**
@@ -53,13 +59,14 @@ class QueryBuilder
     }
 
     /**
+     * Find All Data Rows
      * @return array
-     * @throws \ReflectionException
-     * @throws \Swoft\Bean\Exception\ContainerException
+     * @throws ReflectionException
      */
     public function findAll()
     {
-        return $this->connection->select("SELECT * FROM regions;");
+        $this->where = '';
+        return $this->selectExecute();
     }
 
     /**
@@ -83,6 +90,34 @@ class QueryBuilder
     {
         $this->from = $table;
         return $this;
+    }
+
+    /**
+     * Execute Select Sql
+     * @throws ReflectionException
+     */
+    public function selectExecute()
+    {
+       return $this->connection->select($this->buildSql());
+    }
+
+    /**
+     * Build Select Sql
+     * @return string
+     */
+    public function buildSql()
+    {
+        $sql = "SELECT " . $this->buildColumns() . "FROM " . $this->from . " " . $this->where;
+        return $sql;
+    }
+
+    /**
+     * Build Columns
+     * @return string
+     */
+    protected function buildColumns()
+    {
+        return trim(implode(",", $this->columns), ',');
     }
 
 }
