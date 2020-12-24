@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d07a2e8a3eb576ceb9a6f8b76aa340d5",
+    "content-hash": "2073bc94c343bba9f901512d4e3ab02a",
     "packages": [
         {
-            "name": "curtis18/swoft-pgsql",
-            "version": "1.0.2",
+            "name": "cheney70/swoft-pgsql",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/curtis18/swoft-pgsql.git",
-                "reference": "68265889bc724386d70c72ba49c70ce8602aa185"
+                "url": "https://github.com/cheney70/swoft-pgsql.git",
+                "reference": "27f0ca2dc28f3f744e4e2a58ff02e2ff112ba1bd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/curtis18/swoft-pgsql/zipball/68265889bc724386d70c72ba49c70ce8602aa185",
-                "reference": "68265889bc724386d70c72ba49c70ce8602aa185",
+                "url": "https://api.github.com/repos/cheney70/swoft-pgsql/zipball/27f0ca2dc28f3f744e4e2a58ff02e2ff112ba1bd",
+                "reference": "27f0ca2dc28f3f744e4e2a58ff02e2ff112ba1bd",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -53,7 +53,7 @@
                 "swoft",
                 "swoole"
             ],
-            "time": "2019-11-04T23:14:20+00:00"
+            "time": "2020-12-24T08:01:59+00:00"
         },
         {
             "name": "doctrine/inflector",
@@ -270,7 +270,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "cheney70/swoft-pgsql": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
