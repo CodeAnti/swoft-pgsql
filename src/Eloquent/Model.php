@@ -42,13 +42,13 @@ class Model
     /**
      * Begin querying the model.
      *
-     * @return QueryBuilder
+     * @return Builder
      * @throws ReflectionException
      * @throws PgsqlException
      */
     public function query()
     {
-        return (new QueryBuilder($this->pgsql->createConnection()))->setModel($this);
+        return (new Builder($this->pgsql->createConnection()))->setModel($this);
     }
 
     /**
