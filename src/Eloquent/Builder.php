@@ -334,7 +334,7 @@ class Builder
      */
     protected function buildWheres()
     {
-        if (empty($this->where) || empty($this->orWhere)) {
+        if (empty($this->where) && empty($this->orWhere)) {
             return '';
         }
         $wheres = array_merge_recursive($this->where, $this->orWhere);
