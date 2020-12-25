@@ -2,6 +2,7 @@
 namespace CodeAnti\Swoft\Pgsql\Eloquent;
 
 use Closure;
+use Exception;
 use InvalidArgumentException;
 use ReflectionException;
 use Swoft\Connection\Pool\Contract\ConnectionInterface;
@@ -58,7 +59,10 @@ class Builder
         '~', '~*', '!~', '!~*', 'similar to',
         'not similar to', 'not ilike', '~~*', '!~~*',
     ];
-
+    
+    public const EXECUTE_ACTION_DELETE = 'DELETE';
+    public const EXECUTE_ACTION_UPDATE = 'UPDATE';
+    public const EXECUTE_ACTION_SAVE = 'SAVE';
 
     /**
      * Builder constructor.
@@ -171,6 +175,37 @@ class Builder
     }
 
     /**
+     * Delete All Data Rows
+     * @return Int
+     * @throws Exception
+     */
+    public function delete()
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_DELETE);
+    }
+
+    /**
+     * Update All Data Rows
+     * @param array $attributes
+     * @return Int
+     * @throws Exception
+     */
+    public function update(Array $attributes)
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_UPDATE, $attributes);
+    }
+
+    /**
+     * Save All Data Rows
+     * @return Int
+     * @throws Exception
+     */
+    public function save()
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_SAVE);
+    }
+
+    /**
      * Set a model instance for the model being queried.
      * @param Model $model
      * @return $this
@@ -199,17 +234,89 @@ class Builder
      */
     public function selectExecute()
     {
-       return $this->connection->select($this->buildSql());
+       return $this->connection->select($this->buildSelectSql());
+    }
+
+    /**
+     * Execute Update/Insert/Delete/Save Sql
+     * @param String $action
+     * @param array $attributes
+     * @return Int
+     * @throws Exception
+     */
+    public function sqlExecute(String $action, Array $attributes = [])
+    {
+        switch ($action) {
+            case self::EXECUTE_ACTION_DELETE:
+                $sql = $this->buildDeleteSql();
+                break;
+            case self::EXECUTE_ACTION_UPDATE:
+                $sql = $this->buildUpdateSql($attributes);
+                break;
+            case self::EXECUTE_ACTION_SAVE:
+                $sql = $this->buildSaveSql();
+                break;
+            default:
+                throw new Exception(sprintf('sql action not exists. action:%s', $action));
+        }
+        return $this->connection->executeQuery($sql);
     }
 
     /**
      * Build Select Sql
      * @return string
      */
-    public function buildSql()
+    public function buildSelectSql()
     {
-        $sql = "SELECT " . $this->buildColumns() . "FROM " . $this->from . $this->buildWheres();
+        $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres();
         return $sql;
+    }
+
+    /**
+     * Build Delete Sql
+     * @return string
+     */
+    public function buildDeleteSql()
+    {
+        $sql = "DELETE FROM " . $this->from . $this->buildWheres();
+        return $sql;
+    }
+
+    /**
+     * Build Update Sql
+     * @param array $attributes
+     * @return string
+     */
+    public function buildUpdateSql(Array $attributes)
+    {
+        $sql = "UPDATE SET " . $this->buildAttributesToString($attributes) . " FROM " . $this->from . $this->buildWheres();
+        return $sql;
+    }
+
+    /**
+     * Build Save Sql
+     * @return string
+     */
+    public function buildSaveSql()
+    {
+        // TODO
+    }
+
+    /**
+     * Build Attributes To String
+     * @param array $attributes
+     */
+    protected function buildAttributesToString(Array $attributes)
+    {
+        $attributeSql = '';
+        $index = 0;
+        foreach ($attributes as $key => $attribute) {
+            if ($index > 0) {
+                $attributeSql .= ",";
+            }
+            $attributeSql .= $key . "=" . $attribute;
+            $index++;
+        }
     }
 
     /**
@@ -232,7 +339,7 @@ class Builder
         }
         $wheres = array_merge_recursive($this->where, $this->orWhere);
 
-        $whereConditions = ' where ';
+        $whereConditions = ' WHERE ';
         foreach ($wheres as $key => $where) {
             if ($key != 0) {
                 $whereConditions .= $where['boolean'];
