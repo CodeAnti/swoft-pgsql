@@ -63,6 +63,7 @@ class Builder
     public const EXECUTE_ACTION_DELETE = 'DELETE';
     public const EXECUTE_ACTION_UPDATE = 'UPDATE';
     public const EXECUTE_ACTION_SAVE = 'SAVE';
+    public const EXECUTE_ACTION_INSERT = 'INSERT';
 
     /**
      * Builder constructor.
@@ -196,6 +197,17 @@ class Builder
     }
 
     /**
+     * Insert Data
+     * @param array $attributes
+     * @return Int
+     * @throws Exception
+     */
+    public function insert(Array $attributes)
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_INSERT, $attributes);
+    }
+
+    /**
      * Save All Data Rows
      * @return Int
      * @throws Exception
@@ -249,17 +261,18 @@ class Builder
         switch ($action) {
             case self::EXECUTE_ACTION_DELETE:
                 $sql = $this->buildDeleteSql();
-                break;
+                return $this->connection->executeQuery($sql);
             case self::EXECUTE_ACTION_UPDATE:
                 $sql = $this->buildUpdateSql($attributes);
-                break;
+                return $this->connection->executeQuery($sql);
+            case self::EXECUTE_ACTION_INSERT:
+                $sql = $this->buildInsertSql($attributes);
+                return $this->connection->executeQuery($sql);
             case self::EXECUTE_ACTION_SAVE:
-                $sql = $this->buildSaveSql();
-                break;
+                return $this->executeSave();
             default:
                 throw new Exception(sprintf('sql action not exists. action:%s', $action));
         }
-        return $this->connection->executeQuery($sql);
     }
 
     /**
@@ -289,22 +302,79 @@ class Builder
      */
     public function buildUpdateSql(Array $attributes)
     {
-        $sql = "UPDATE SET " . $this->buildAttributesToString($attributes) . " FROM " . $this->from . $this->buildWheres();
+        $sql = "UPDATE " . $this->from . " SET " . $this->buildAttributesToString($attributes) . $this->buildWheres();
         return $sql;
     }
 
+    /**
+     * Build Insert Sql
+     * @param array $attributes
+     * @return string
+     */
+    public function buildInsertSql(Array $attributes)
+    {
+        $sql = "INSERT INTO " . $this->from . $this->buildInsertAttributes($attributes) . " RETURNING " . $this->model->primaryKey;
+        return $sql;
+    }
+
+    /**
+     * Execute Save Sql
+     * @return array|bool|Int
+     * @throws Exception
+     */
+    public function executeSave()
+    {
+        $sql = $this->buildSaveSql();
+        if (isset($attributes[$this->model->primaryKey])) {
+            // update data
+            return $this->connection->executeQuery($sql);
+        } else {
+            // insert data
+            $result = $this->connection->selectQuery($sql);
+            return $result[$this->model->primaryKey];
+        }
+    }
+    
     /**
      * Build Save Sql
      * @return string
      */
     public function buildSaveSql()
     {
-        // TODO
+        $attributes = $this->model->attributes;
+        
+        if (isset($attributes[$this->model->primaryKey])) {
+            // update data
+            $this->where($this->model->primaryKey, $attributes[$this->model->primaryKey]);
+            return $this->buildUpdateSql($attributes);
+        } else {
+            // insert data
+            return $this->buildInsertSql($attributes);
+        }
+    }
+
+    /**
+     * Build Insert Attributes
+     * @param array $attributes
+     * @return string
+     */
+    protected function buildInsertAttributes(Array $attributes)
+    {
+        $keyList = [];
+        $attributeList = [];
+        foreach ($attributes as $key => $attribute) {
+            array_push($keyList, $key);
+            array_push($attributeList, "'"  . $attribute . "'");
+        }
+        
+        $sql = "(" . implode(",", $keyList) . ")" . " VALUES " . "(" . implode(",", $attributeList) . ")";
+        return $sql;
     }
 
     /**
      * Build Attributes To String
      * @param array $attributes
+     * @return string
      */
     protected function buildAttributesToString(Array $attributes)
     {
@@ -314,9 +384,10 @@ class Builder
             if ($index > 0) {
                 $attributeSql .= ",";
             }
-            $attributeSql .= $key . "=" . $attribute;
+            $attributeSql .= $key . "=" . "'" . $attribute . "'";
             $index++;
         }
+        return $attributeSql;
     }
 
     /**

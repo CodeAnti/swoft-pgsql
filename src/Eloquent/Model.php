@@ -38,9 +38,21 @@ class Model
      */
     protected $table;
 
+    /**
+     * primary key
+     * @var string 
+     */
+    public $primaryKey = 'id';
 
     /**
-     * Begin querying the model.
+     * The model attributes.
+     * @var array
+     */
+    public $attributes = [];
+
+
+    /**
+     * Begin query the model.
      *
      * @return Builder
      * @throws ReflectionException
@@ -49,6 +61,21 @@ class Model
     public function query()
     {
         return (new Builder($this->pgsql->createConnection()))->setModel($this);
+    }
+
+    /**
+     * Begin save the model.
+     *
+     * @return void
+     * @throws PgsqlException
+     * @throws ReflectionException
+     */
+    public function save()
+    {
+         $primaryKeyValue = (new Builder($this->pgsql->createConnection()))->setModel($this)->save();
+         if (!isset($this->attributes[$this->primaryKey])) {
+             $this->attributes[$this->primaryKey] = $primaryKeyValue;
+         }
     }
 
     /**
@@ -67,6 +94,27 @@ class Model
         return $this->table;
     }
 
+    /**
+     * Set Attribute Value
+     * 
+     * @param $name
+     * @param $value
+     */
+    public function __set($name, $value)
+    {
+        $this->attributes[$name] = $value;
+    }
 
-
+    /**
+     * Get Attributes Value
+     * @param $name
+     * @return mixed|null
+     */
+    public function __get($name)
+    {
+        if (isset($this->attributes[$name])) {
+            return $this->attributes[$name];
+        }
+        return null;
+    }
 }
