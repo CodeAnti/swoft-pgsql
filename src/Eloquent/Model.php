@@ -3,6 +3,7 @@ namespace CodeAnti\Swoft\Pgsql\Eloquent;
 
 use CodeAnti\Swoft\Pgsql\Traits\HelperTraits;
 use CodeAnti\Swoft\Pgsql\Traits\StrTraits;
+use Exception;
 use ReflectionException;
 use Swoft\Bean\Annotation\Mapping\Bean;
 use Swoft\Bean\Annotation\Mapping\Inject;
@@ -69,6 +70,7 @@ class Model
      * @return void
      * @throws PgsqlException
      * @throws ReflectionException
+     * @throws Exception
      */
     public function save()
     {
@@ -77,7 +79,7 @@ class Model
              $this->attributes[$this->primaryKey] = $primaryKeyValue;
          }
     }
-
+    
     /**
      * Get the table associated with the model.
      *

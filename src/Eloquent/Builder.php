@@ -11,7 +11,7 @@ use Swoft\Pgsql\Connection\Connection;
 class Builder
 {
     /**
-     * @var Connection 
+     * @var Connection
      */
     public $connection;
 
@@ -47,6 +47,24 @@ class Builder
     public $orWhere = [];
 
     /**
+     * The Query Order By
+     * @var array
+     */
+    public $orderBy = [];
+
+    /**
+     * The Query Limit
+     * @var Int
+     */
+    public $limit = 0;
+
+    /**
+     * The Query Offset
+     * @var Int
+     */
+    public $offset = 0;
+
+    /**
      * All of the available clause operators.
      *
      * @var array
@@ -59,11 +77,17 @@ class Builder
         '~', '~*', '!~', '!~*', 'similar to',
         'not similar to', 'not ilike', '~~*', '!~~*',
     ];
-    
+
     public const EXECUTE_ACTION_DELETE = 'DELETE';
     public const EXECUTE_ACTION_UPDATE = 'UPDATE';
     public const EXECUTE_ACTION_SAVE = 'SAVE';
     public const EXECUTE_ACTION_INSERT = 'INSERT';
+
+    public const SELECT_ACTION_FIND_ALL = 'FIND_ALL';
+    public const SELECT_ACTION_FIRST = 'FIRST';
+    public const SELECT_ACTION_FIND = 'FIND';
+    public const SELECT_ACTION_COUNT = 'COUNT';
+    public const SELECT_ACTION_SUM = 'SUM';
 
     /**
      * Builder constructor.
@@ -75,8 +99,16 @@ class Builder
     }
 
     /**
+     * @return array
+     */
+    public function getColumns(): array
+    {
+        return $this->columns;
+    }
+
+    /**
      * Set the columns to be selected.
-     * @param  array|mixed  $columns
+     * @param array|mixed $columns
      */
     public function select($columns = ['*'])
     {
@@ -84,15 +116,77 @@ class Builder
     }
 
     /**
+     * Query Paginate
+     * @param int $perPage
+     * @param int $currentPage
+     * @return array
+     * @throws ReflectionException
+     */
+    public function paginate($perPage = 15, $currentPage = 1)
+    {
+        if ($perPage <= 0) {
+            $perPage = 15;
+        }
+
+        // total count
+        $count = $this->selectExecute(self::SELECT_ACTION_COUNT);
+
+        // total pageNum
+        $pageNum = intval(ceil($count / $perPage));
+        if ($currentPage > $pageNum) {
+            $currentPage = $pageNum;
+        }
+
+        // offset limit
+        $this->offset = ($currentPage - 1) * $perPage;
+        $this->limit = $perPage;
+
+        // items
+        $items = $this->selectExecute(self::SELECT_ACTION_FIND_ALL);
+
+        return [
+            'current_page' => $currentPage,
+            'total_page' => $pageNum,
+            'total_records' => $count,
+            'data' => $items
+        ];
+    }
+
+    public function with()
+    {
+
+    }
+
+    public function hasOne()
+    {
+
+    }
+
+    public function belongsTo()
+    {
+
+    }
+
+    public function hasMany()
+    {
+
+    }
+
+    public function belongsToMany()
+    {
+
+    }
+
+    /**
      * Add a basic where clause to the query.
      *
-     * @param  string|array|\Closure  $column
-     * @param  string  $operator
-     * @param  mixed  $value
-     * @param  string  $boolean
+     * @param string|array|Closure $column
+     * @param string $operator
+     * @param mixed $value
+     * @param string $boolean
      * @return Builder
      */
-    public function where($column, $operator = null, $value = null, $boolean = 'and') 
+    public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
         if ($column instanceof Closure) {
             // TODO
@@ -103,11 +197,11 @@ class Builder
             list($value, $operator) = $this->prepareValueAndOperator(
                 $value, $operator, func_num_args() == 2
             );
-            
+
             if ($boolean == 'or') {
                 array_push($this->orWhere, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
             }
-            
+
             if ($boolean == 'and') {
                 array_push($this->where, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
             }
@@ -119,7 +213,7 @@ class Builder
     /**
      * Add a basic where clause to the query.
      *
-     * @param string|array|\Closure $column
+     * @param string|array|Closure $column
      * @param string $operator
      * @param mixed $value
      * @param string $boolean
@@ -133,9 +227,9 @@ class Builder
     /**
      * Prepare the value and operator for a where clause.
      *
-     * @param  string  $value
-     * @param  string  $operator
-     * @param  bool  $useDefault
+     * @param string $value
+     * @param string $operator
+     * @param bool $useDefault
      * @return array
      * @throws InvalidArgumentException
      */
@@ -155,14 +249,14 @@ class Builder
      *
      * Prevents using Null values with invalid operators.
      *
-     * @param  string  $operator
-     * @param  mixed  $value
+     * @param string $operator
+     * @param mixed $value
      * @return bool
      */
     protected function invalidOperatorAndValue($operator, $value)
     {
         return is_null($value) && in_array($operator, $this->operators) &&
-            ! in_array($operator, ['=', '<>', '!=']);
+            !in_array($operator, ['=', '<>', '!=']);
     }
 
     /**
@@ -172,7 +266,40 @@ class Builder
      */
     public function findAll()
     {
-        return $this->selectExecute();
+        return $this->selectExecute(self::SELECT_ACTION_FIND_ALL);
+    }
+
+    /**
+     * Query Order By
+     * @param array $orderBy
+     * @return Builder
+     */
+    public function orderBy(Array $orderBy)
+    {
+        $this->orderBy = $orderBy;
+        return $this;
+    }
+
+    /**
+     * Query Limit
+     * @param Int $limit
+     * @return Builder
+     */
+    public function limit(Int $limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * Query Offset
+     * @param Int $offset
+     * @return Builder
+     */
+    public function offset(Int $offset)
+    {
+        $this->offset = $offset;
+        return $this;
     }
 
     /**
@@ -231,7 +358,7 @@ class Builder
 
     /**
      * Set the table which the query is targeting.
-     * @param  string  $table
+     * @param string $table
      * @return $this
      */
     public function setFrom($table)
@@ -242,11 +369,22 @@ class Builder
 
     /**
      * Execute Select Sql
+     * @param string $action
+     * @return array
      * @throws ReflectionException
+     * @throws Exception
      */
-    public function selectExecute()
+    public function selectExecute($action = '')
     {
-       return $this->connection->select($this->buildSelectSql());
+        switch ($action) {
+            case self::SELECT_ACTION_COUNT:
+                $count = $this->connection->select($this->buildSelectCountSql());
+                return $count[0]['count'];
+            case self::SELECT_ACTION_FIND_ALL:
+                return $this->connection->select($this->buildSelectSql());
+            default:
+                throw new Exception(sprintf('select sql action not exists. action:%s', $action));
+        }
     }
 
     /**
@@ -271,7 +409,7 @@ class Builder
             case self::EXECUTE_ACTION_SAVE:
                 return $this->executeSave();
             default:
-                throw new Exception(sprintf('sql action not exists. action:%s', $action));
+                throw new Exception(sprintf('execute sql action not exists. action:%s', $action));
         }
     }
 
@@ -281,7 +419,17 @@ class Builder
      */
     public function buildSelectSql()
     {
-        $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres();
+        $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres() . $this->buildOrderBy() . $this->buildLimit() . $this->buildOffset();
+        echo $sql;
+        return $sql;
+    }
+
+    /**
+     * Build Select Count sql
+     */
+    public function buildSelectCountSql()
+    {
+        $sql = "SELECT COUNT(*) FROM " . $this->from . $this->buildWheres();
         return $sql;
     }
 
@@ -334,7 +482,7 @@ class Builder
             return $result[$this->model->primaryKey];
         }
     }
-    
+
     /**
      * Build Save Sql
      * @return string
@@ -342,7 +490,7 @@ class Builder
     public function buildSaveSql()
     {
         $attributes = $this->model->attributes;
-        
+
         if (isset($attributes[$this->model->primaryKey])) {
             // update data
             $this->where($this->model->primaryKey, $attributes[$this->model->primaryKey]);
@@ -364,9 +512,9 @@ class Builder
         $attributeList = [];
         foreach ($attributes as $key => $attribute) {
             array_push($keyList, $key);
-            array_push($attributeList, "'"  . $attribute . "'");
+            array_push($attributeList, "'" . $attribute . "'");
         }
-        
+
         $sql = "(" . implode(",", $keyList) . ")" . " VALUES " . "(" . implode(",", $attributeList) . ")";
         return $sql;
     }
@@ -418,7 +566,55 @@ class Builder
 
             $whereConditions = $whereConditions . $where['column'] . $where['operator'] . $where['value'];
         }
-        
+
         return $whereConditions;
+    }
+
+    /**
+     * Build Order By
+     * @return string
+     */
+    protected function buildOrderBy()
+    {
+        if (empty($this->orderBy)) {
+            return '';
+        }
+
+        $index = 0;
+        $orderByCondition = ' ORDER BY ';
+        foreach ($this->orderBy as $key => $orderBy) {
+            if ($index != 0) {
+                $orderByCondition .= ',';
+            }
+            $orderByCondition .= $key . ' ' . $orderBy;
+            $index++;
+        }
+    }
+
+    /**
+     * Build Limit
+     * @return string
+     */
+    protected function buildLimit()
+    {
+        if ($this->limit === 0) {
+            return '';
+        }
+
+        return ' LIMIT ' . $this->limit;
+    }
+
+
+    /**
+     * Build Limit
+     * @return string
+     */
+    protected function buildOffset()
+    {
+        if ($this->offset === 0) {
+            return '';
+        }
+
+        return ' OFFSET ' . $this->offset;
     }
 }
