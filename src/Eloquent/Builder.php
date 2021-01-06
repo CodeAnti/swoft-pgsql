@@ -221,11 +221,9 @@ class Builder
      *
      * @param $column
      * @param null $operator
-     * @param null $value
-     * @param string $boolean
      * @return Builder
      */
-    public function whereIn($column, $operator = null, $value = null, $boolean = 'and')
+    public function whereIn($column, $operator = null)
     {
         return $this->where($column, 'in', "(".implode(',', $operator).")", 'and');
     }
@@ -580,6 +578,7 @@ class Builder
 
     /**
      * Build With
+     * @param array $lists
      * @return array
      */
     protected function buildWith(array $lists)

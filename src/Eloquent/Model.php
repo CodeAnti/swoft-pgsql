@@ -96,8 +96,12 @@ class Model
         return $this->table;
     }
 
+
     /**
      * Has One
+     * @param $related
+     * @param null $foreignKey
+     * @param null $localKey
      * @return array
      */
     public function hasOne($related, $foreignKey = null, $localKey = null)
@@ -105,9 +109,16 @@ class Model
         return ['model' => $related, 'foreign_key' => $foreignKey, 'local_key' => $localKey, 'is_array' => false];
     }
 
-    public function belongsTo()
+    /**
+     * BelongsTo
+     * @param $related
+     * @param null $foreignKey
+     * @param null $localKey
+     * @return array
+     */
+    public function belongsTo($related, $foreignKey = null, $localKey = null)
     {
-
+        return ['model' => $related, 'foreign_key' => $localKey, 'local_key' => $foreignKey, 'is_array' => false];
     }
 
     public function hasMany()
