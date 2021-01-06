@@ -266,6 +266,17 @@ class Builder
     }
 
     /**
+     * Find First Data
+     * @return array
+     * @throws ReflectionException
+     */
+    public function first()
+    {
+        $this->limit = 1;
+        return $this->selectExecute(self::SELECT_ACTION_FIRST);
+    }
+
+    /**
      * Find All Data Rows
      * @return array
      * @throws ReflectionException
@@ -389,6 +400,9 @@ class Builder
             case self::SELECT_ACTION_FIND_ALL:
                 $lists = $this->connection->select($this->buildSelectSql());
                 return $this->buildWith($lists);
+            case self::SELECT_ACTION_FIRST:
+                $results = $this->connection->select($this->buildSelectSql());
+                return empty($results) ? [] : $results[0];
             default:
                 throw new Exception(sprintf('select sql action not exists. action:%s', $action));
         }
