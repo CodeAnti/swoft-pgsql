@@ -97,6 +97,30 @@ class Model
     }
 
     /**
+     * Has One
+     * @return array
+     */
+    public function hasOne($related, $foreignKey = null, $localKey = null)
+    {
+        return ['model' => $related, 'foreign_key' => $foreignKey, 'local_key' => $localKey, 'is_array' => false];
+    }
+
+    public function belongsTo()
+    {
+
+    }
+
+    public function hasMany()
+    {
+
+    }
+
+    public function belongsToMany()
+    {
+
+    }
+
+    /**
      * Set Attribute Value
      * 
      * @param $name

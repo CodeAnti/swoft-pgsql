@@ -30,13 +30,20 @@ class Builder
     public $from;
 
     /**
-     * The model being queried.
+     * The Model Being Queried.
      * @var Model
      */
     public $model;
 
     /**
+     * The Query Relations
+     * @var array
+     */
+    public $relations = [];
+
+    /**
      * The Select Where Conditions
+     * @var array
      */
     public $where = [];
 
@@ -99,6 +106,7 @@ class Builder
     }
 
     /**
+     * Get Columns
      * @return array
      */
     public function getColumns(): array
@@ -152,29 +160,15 @@ class Builder
         ];
     }
 
-    public function with()
+    /**
+     * Query With
+     * @param String $relation
+     * @return $this
+     */
+    public function with(String $relation)
     {
-
-    }
-
-    public function hasOne()
-    {
-
-    }
-
-    public function belongsTo()
-    {
-
-    }
-
-    public function hasMany()
-    {
-
-    }
-
-    public function belongsToMany()
-    {
-
+        array_push($this->relations, $relation);
+        return $this;
     }
 
     /**
@@ -200,9 +194,7 @@ class Builder
 
             if ($boolean == 'or') {
                 array_push($this->orWhere, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
-            }
-
-            if ($boolean == 'and') {
+            } else {
                 array_push($this->where, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
             }
         }
@@ -222,6 +214,20 @@ class Builder
     public function orWhere($column, $operator = null, $value = null, $boolean = 'or')
     {
         return $this->where(...func_get_args());
+    }
+
+    /**
+     * Add a basic where clause to the query.
+     *
+     * @param $column
+     * @param null $operator
+     * @param null $value
+     * @param string $boolean
+     * @return Builder
+     */
+    public function whereIn($column, $operator = null, $value = null, $boolean = 'and')
+    {
+        return $this->where($column, 'in', "(".implode(',', $operator).")", 'and');
     }
 
     /**
@@ -381,7 +387,8 @@ class Builder
                 $count = $this->connection->select($this->buildSelectCountSql());
                 return $count[0]['count'];
             case self::SELECT_ACTION_FIND_ALL:
-                return $this->connection->select($this->buildSelectSql());
+                $lists = $this->connection->select($this->buildSelectSql());
+                return $this->buildWith($lists);
             default:
                 throw new Exception(sprintf('select sql action not exists. action:%s', $action));
         }
@@ -420,12 +427,13 @@ class Builder
     public function buildSelectSql()
     {
         $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres() . $this->buildOrderBy() . $this->buildLimit() . $this->buildOffset();
-        echo $sql;
+        echo $sql . "\n";
         return $sql;
     }
 
     /**
      * Build Select Count sql
+     * @return string
      */
     public function buildSelectCountSql()
     {
@@ -564,10 +572,46 @@ class Builder
                 $whereConditions .= $where['boolean'];
             }
 
-            $whereConditions = $whereConditions . $where['column'] . $where['operator'] . $where['value'];
+            $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
         }
 
         return $whereConditions;
+    }
+
+    /**
+     * Build With
+     * @return array
+     */
+    protected function buildWith(array $lists)
+    {
+        if (empty($lists) || empty($this->relations)) {
+            return $lists;
+        }
+
+        foreach($this->relations as $relation) {
+            $withObject = call_user_func_array([$this->model, $relation], []);
+            $withModel = $withObject['model'];
+            $localKey = $withObject['local_key'];
+            $foreignKey = $withObject['foreign_key'];
+
+            $idList = array_column($lists, $localKey);
+            $withList = $withModel->query()->whereIn($foreignKey, $idList)->findAll();
+
+            $resetWithList = [];
+            foreach($withList as $with) {
+                $resetWithList[$with[$foreignKey]][] = $with;
+            }
+
+            foreach($lists as &$list) {
+                if ($withObject['is_array']) {
+                    $list[$relation] = $resetWithList[$list[$localKey]];
+                } else {
+                    $list[$relation] = empty($resetWithList[$list[$localKey]]) ? null : $resetWithList[$list[$localKey]][0];
+                }
+            }
+        }
+
+        return $lists;
     }
 
     /**
