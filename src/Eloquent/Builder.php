@@ -221,9 +221,11 @@ class Builder
      *
      * @param $column
      * @param null $operator
+     * @param null $value
+     * @param string $boolean
      * @return Builder
      */
-    public function whereIn($column, $operator = null)
+    public function whereIn($column, $operator = null, $value = null, $boolean = 'and')
     {
         return $this->where($column, 'in', "(".implode(',', $operator).")", 'and');
     }

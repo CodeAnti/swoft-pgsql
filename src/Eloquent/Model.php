@@ -98,7 +98,7 @@ class Model
 
 
     /**
-     * Has One
+     * HasOne
      * @param $related
      * @param null $foreignKey
      * @param null $localKey
@@ -121,14 +121,28 @@ class Model
         return ['model' => $related, 'foreign_key' => $localKey, 'local_key' => $foreignKey, 'is_array' => false];
     }
 
-    public function hasMany()
+    /**
+     * HasMany
+     * @param $related
+     * @param null $foreignKey
+     * @param null $localKey
+     * @return array
+     */
+    public function hasMany($related, $foreignKey = null, $localKey = null)
     {
-
+        return ['model' => $related, 'foreign_key' => $foreignKey, 'local_key' => $localKey, 'is_array' => true];
     }
 
-    public function belongsToMany()
+    /**
+     * BelongsToMany
+     * @param $related
+     * @param null $foreignKey
+     * @param null $localKey
+     * @return array
+     */
+    public function belongsToMany($related, $foreignKey = null, $localKey = null)
     {
-
+        return ['model' => $related, 'foreign_key' => $localKey, 'local_key' => $foreignKey, 'is_array' => true];
     }
 
     /**
