@@ -586,6 +586,9 @@ class Builder
                 $whereConditions .= $where['boolean'];
             }
 
+            if (is_string($where['value'])) {
+                $where['value'] = "'" . $where['value'] . "'";
+            }
             $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
         }
 
