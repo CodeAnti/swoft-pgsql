@@ -48,12 +48,6 @@ class Builder
     public $where = [];
 
     /**
-     * The Select OrWhere Conditions
-     * @var array
-     */
-    public $orWhere = [];
-
-    /**
      * The Query Order By
      * @var array
      */
@@ -192,11 +186,7 @@ class Builder
                 $value, $operator, func_num_args() == 2
             );
 
-            if ($boolean == 'or') {
-                array_push($this->orWhere, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
-            } else {
-                array_push($this->where, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
-            }
+            array_push($this->where, ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
         }
 
         return $this;
@@ -232,11 +222,12 @@ class Builder
      * Add a basic where clause to the query.
      *
      * @param $column
+     * @param $boolean
      * @return Builder
      */
-    public function whereNull($column)
+    public function whereNull($column, $boolean = 'and')
     {
-        return $this->where($column, 'IS', NULL, 'and');
+        return $this->where($column, 'IS', NULL, $boolean);
     }
 
     /**
@@ -594,13 +585,12 @@ class Builder
      */
     protected function buildWheres()
     {
-        if (empty($this->where) && empty($this->orWhere)) {
+        if (empty($this->where)) {
             return '';
         }
-        $wheres = array_merge_recursive($this->where, $this->orWhere);
 
         $whereConditions = ' WHERE ';
-        foreach ($wheres as $key => $where) {
+        foreach ($this->where as $key => $where) {
             if ($key != 0) {
                 $whereConditions .= ' ' . $where['boolean'] . ' ';
             }
