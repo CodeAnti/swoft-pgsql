@@ -227,7 +227,7 @@ class Builder
      */
     public function whereNull($column, $boolean = 'and')
     {
-        return $this->where($column, 'IS', 'NULL', $boolean);
+        return $this->where($column, 'IS', NULL, $boolean);
     }
 
     /**
@@ -597,6 +597,10 @@ class Builder
 
             if (!empty($where['column']) && is_string($where['value'])) {
                 $where['value'] = "'" . $where['value'] . "'";
+            }
+
+            if (!empty($where['column']) && is_null($where['value'])) {
+                $where['value'] = 'NULL';
             }
             $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
         }
