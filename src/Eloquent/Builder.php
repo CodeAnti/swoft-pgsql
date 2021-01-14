@@ -227,7 +227,7 @@ class Builder
      */
     public function whereNull($column, $boolean = 'and')
     {
-        return $this->where($column, 'IS', NULL, $boolean);
+        return $this->where($column, 'IS', 'NULL', $boolean);
     }
 
     /**
