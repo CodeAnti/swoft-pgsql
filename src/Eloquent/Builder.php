@@ -232,6 +232,18 @@ class Builder
 
     /**
      * Add a basic where clause to the query.
+     *
+     * @param $column
+     * @param $boolean
+     * @return Builder
+     */
+    public function whereNotNull($column, $boolean = 'and')
+    {
+        return $this->where($column, 'IS NOT', NULL, $boolean);
+    }
+
+    /**
+     * Add a basic where clause to the query.
      * @param $sql
      * @return Builder
      */
