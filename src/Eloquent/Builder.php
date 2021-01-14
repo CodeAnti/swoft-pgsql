@@ -221,13 +221,32 @@ class Builder
      *
      * @param $column
      * @param null $operator
-     * @param null $value
-     * @param string $boolean
      * @return Builder
      */
-    public function whereIn($column, $operator = null, $value = null, $boolean = 'and')
+    public function whereIn($column, $operator = null)
     {
         return $this->where($column, 'in', "(".implode(',', $operator).")", 'and');
+    }
+
+    /**
+     * Add a basic where clause to the query.
+     *
+     * @param $column
+     * @return Builder
+     */
+    public function whereNull($column)
+    {
+        return $this->where($column, 'IS', NULL, 'and');
+    }
+
+    /**
+     * Add a basic where clause to the query.
+     * @param $sql
+     * @return Builder
+     */
+    public function whereRaw($sql)
+    {
+        return $this->where('', '', "(" . $sql . ")", 'and');
     }
 
     /**
@@ -583,10 +602,10 @@ class Builder
         $whereConditions = ' WHERE ';
         foreach ($wheres as $key => $where) {
             if ($key != 0) {
-                $whereConditions .= $where['boolean'];
+                $whereConditions .= ' ' . $where['boolean'] . ' ';
             }
 
-            if (is_string($where['value'])) {
+            if (!empty($where['column']) && is_string($where['value'])) {
                 $where['value'] = "'" . $where['value'] . "'";
             }
             $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
