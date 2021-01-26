@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "cheney70/swoft-pgsql",
-            "version": "1.0.3",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cheney70/swoft-pgsql.git",
-                "reference": "6c43c07b0b4d68ecbe0a8cbd16ec03783782f38e"
+                "reference": "691c27d7866992f63d7bbfbc2b1b8fa2d2352f0d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cheney70/swoft-pgsql/zipball/6c43c07b0b4d68ecbe0a8cbd16ec03783782f38e",
-                "reference": "6c43c07b0b4d68ecbe0a8cbd16ec03783782f38e",
+                "url": "https://api.github.com/repos/cheney70/swoft-pgsql/zipball/691c27d7866992f63d7bbfbc2b1b8fa2d2352f0d",
+                "reference": "691c27d7866992f63d7bbfbc2b1b8fa2d2352f0d",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -53,7 +53,7 @@
                 "swoft",
                 "swoole"
             ],
-            "time": "2021-01-13T08:43:15+00:00"
+            "time": "2021-01-26T04:01:59+00:00"
         },
         {
             "name": "doctrine/inflector",

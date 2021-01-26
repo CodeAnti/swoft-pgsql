@@ -165,6 +165,11 @@ class Builder
         return $this;
     }
 
+//    public function whereHas(String $relation, Closure $callback)
+//    {
+//
+//    }
+
     /**
      * Add a basic where clause to the query.
      *
@@ -215,7 +220,7 @@ class Builder
      */
     public function whereIn($column, $operator = null)
     {
-        return $this->where($column, 'in', "(".implode(',', $operator).")", 'and');
+        return $this->where($column, 'in', "(" . implode(',', $operator) . ")", 'and');
     }
 
     /**
@@ -339,6 +344,30 @@ class Builder
     {
         $this->offset = $offset;
         return $this;
+    }
+
+    /**
+     * Begin Transaction
+     */
+    public function beginTransaction()
+    {
+        $this->connection->beginTransaction();
+    }
+
+    /**
+     * Commit
+     */
+    public function commit()
+    {
+        $this->connection->commit();
+    }
+
+    /**
+     * Rollback
+     */
+    public function rollback()
+    {
+        $this->connection->rollback();
     }
 
     /**
