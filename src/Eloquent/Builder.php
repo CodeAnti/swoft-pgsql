@@ -54,6 +54,18 @@ class Builder
     public $orderBy = [];
 
     /**
+     * The Query Group By
+     * @var array
+     */
+    public $groupBy = [];
+
+    /**
+     * The Query Having
+     * @var string
+     */
+    public $having = '';
+
+    /**
      * The Query Limit
      * @var Int
      */
@@ -83,12 +95,15 @@ class Builder
     public const EXECUTE_ACTION_UPDATE = 'UPDATE';
     public const EXECUTE_ACTION_SAVE = 'SAVE';
     public const EXECUTE_ACTION_INSERT = 'INSERT';
+    public const EXECUTE_ACTION_INCREASE = 'INCREASE';
+    public const EXECUTE_ACTION_DECREASE = 'DECREASE';
 
     public const SELECT_ACTION_FIND_ALL = 'FIND_ALL';
     public const SELECT_ACTION_FIRST = 'FIRST';
     public const SELECT_ACTION_FIND = 'FIND';
     public const SELECT_ACTION_COUNT = 'COUNT';
     public const SELECT_ACTION_SUM = 'SUM';
+    public const SELECT_ACTION_EXISTS = 'EXISTS';
 
     /**
      * Builder constructor.
@@ -165,10 +180,100 @@ class Builder
         return $this;
     }
 
-//    public function whereHas(String $relation, Closure $callback)
-//    {
+    /**
+     * WhereHas
+     * @param String $relation
+     * @param Closure $callback
+     * @return Builder
+     */
+    public function whereHas(String $relation, Closure $callback)
+    {
+//        $withObject = call_user_func_array([$this->model, $relation], []);
+//        $withModel = $withObject['model'];
+//        $localKey = $withObject['local_key'];
+//        $foreignKey = $withObject['foreign_key'];
 //
-//    }
+//        "SELECT COUNT(*) FROM " . $withModel->getTable . " WHERE " . $this->model->getTable() . "." . $localKey . "=" . $withModel->getTable . "." . $foreignKey .
+//
+//        $sql = "(" . ")";
+//        array_push($this->where, ['relation' => $relation, 'callback' => $callback, 'boolean' => 'and']);
+        return $this;
+    }
+
+    /**
+     * Count
+     * @throws ReflectionException
+     */
+    public function count()
+    {
+        return $this->selectExecute(self::SELECT_ACTION_COUNT);
+    }
+
+    /**
+     * Sum
+     * @param $column
+     * @return mixed
+     * @throws ReflectionException
+     */
+    public function sum($column)
+    {
+        return $this->selectExecute(self::SELECT_ACTION_SUM, $column);
+    }
+
+    /**
+     * Group By
+     * @param array $columns
+     * @return Builder
+     */
+    public function groupBy(array $columns = [])
+    {
+        $this->groupBy = $columns;
+        return $this;
+    }
+
+    /**
+     * Having
+     * @param $expression
+     * @return Builder
+     */
+    public function having(string $expression)
+    {
+        $this->having = $expression;
+        return $this;
+    }
+
+    /**
+     * Exists
+     * @throws ReflectionException
+     */
+    public function exists()
+    {
+        return $this->selectExecute(self::SELECT_ACTION_EXISTS);
+    }
+
+    /**
+     * Increase
+     * @param $column
+     * @param $rate
+     * @return Int
+     * @throws Exception
+     */
+    public function increase($column, $rate)
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_INCREASE, ['column' => $column, 'rate' => $rate]);
+    }
+
+    /**
+     * Decrease
+     * @param $column
+     * @param $rate
+     * @return Int
+     * @throws Exception
+     */
+    public function decrease($column, $rate)
+    {
+        return $this->sqlExecute(self::EXECUTE_ACTION_DECREASE, ['column' => $column, 'rate' => $rate]);
+    }
 
     /**
      * Add a basic where clause to the query.
@@ -438,14 +543,21 @@ class Builder
     /**
      * Execute Select Sql
      * @param string $action
-     * @return array
+     * @param $column
+     * @return mixed
      * @throws ReflectionException
      * @throws Exception
      */
-    public function selectExecute($action = '')
+    public function selectExecute($action = '', $column = null)
     {
         switch ($action) {
             case self::SELECT_ACTION_COUNT:
+                $count = $this->connection->select($this->buildSelectCountSql());
+                return $count[0]['count'];
+            case self::SELECT_ACTION_SUM:
+                $sum = $this->connection->select($this->buildSelectSumSql($column));
+                return $sum[0]['sum'] > 0;
+            case self::SELECT_ACTION_EXISTS:
                 $count = $this->connection->select($this->buildSelectCountSql());
                 return $count[0]['count'];
             case self::SELECT_ACTION_FIND_ALL:
@@ -466,7 +578,7 @@ class Builder
      * @return Int
      * @throws Exception
      */
-    public function sqlExecute(String $action, Array $attributes = [])
+    public function sqlExecute(String $action, $attributes = [])
     {
         switch ($action) {
             case self::EXECUTE_ACTION_DELETE:
@@ -480,6 +592,12 @@ class Builder
                 return $this->connection->executeQuery($sql);
             case self::EXECUTE_ACTION_SAVE:
                 return $this->executeSave();
+            case self::EXECUTE_ACTION_INCREASE:
+                $sql = $this->buildIncreaseSql($attributes);
+                return $this->connection->executeQuery($sql);
+            case self::EXECUTE_ACTION_DECREASE:
+                $sql = $this->buildDecreaseSql($attributes);
+                return $this->connection->executeQuery($sql);
             default:
                 throw new Exception(sprintf('execute sql action not exists. action:%s', $action));
         }
@@ -491,7 +609,7 @@ class Builder
      */
     public function buildSelectSql()
     {
-        $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres() . $this->buildOrderBy() . $this->buildLimit() . $this->buildOffset();
+        $sql = "SELECT " . $this->buildColumns() . " FROM " . $this->from . $this->buildWheres() . $this->buildOrderBy() . $this->buildLimit() . $this->buildOffset() . $this->buildGroupBy() . $this->buildHaving();
         echo $sql . "\n";
         return $sql;
     }
@@ -503,6 +621,17 @@ class Builder
     public function buildSelectCountSql()
     {
         $sql = "SELECT COUNT(*) FROM " . $this->from . $this->buildWheres();
+        return $sql;
+    }
+
+    /**
+     * Build Select Sum sql
+     * @param $column
+     * @return string
+     */
+    public function buildSelectSumSql($column)
+    {
+        $sql = "SELECT SUM(". $column . ") FROM " . $this->from . $this->buildWheres();
         return $sql;
     }
 
@@ -524,6 +653,28 @@ class Builder
     public function buildUpdateSql(Array $attributes)
     {
         $sql = "UPDATE " . $this->from . " SET " . $this->buildAttributesToString($attributes) . $this->buildWheres();
+        return $sql;
+    }
+
+    /**
+     * Build Increase Sql
+     * @param array $attributes
+     * @return string
+     */
+    public function buildIncreaseSql(Array $attributes)
+    {
+        $sql = "UPDATE " . $this->from . " SET " . $attributes['column'] . '=' . $attributes['column'] . '+1' . $this->buildWheres();
+        return $sql;
+    }
+
+    /**
+     * Build Decrease Sql
+     * @param array $attributes
+     * @return string
+     */
+    public function buildDecreaseSql(Array $attributes)
+    {
+        $sql = "UPDATE " . $this->from . " SET " . $attributes['column'] . '=' . $attributes['column'] . '-1' . $this->buildWheres();
         return $sql;
     }
 
@@ -629,21 +780,26 @@ class Builder
         if (empty($this->where)) {
             return '';
         }
-
         $whereConditions = ' WHERE ';
+
         foreach ($this->where as $key => $where) {
             if ($key != 0) {
                 $whereConditions .= ' ' . $where['boolean'] . ' ';
             }
 
-            if (!empty($where['column']) && is_string($where['value'])) {
-                $where['value'] = "'" . $where['value'] . "'";
-            }
+            if (isset($where['relation']) && isset($where['callback'])) {
 
-            if (!empty($where['column']) && is_null($where['value'])) {
-                $where['value'] = 'NULL';
+            } else {
+                // where
+                if (!empty($where['column']) && is_string($where['value'])) {
+                    $where['value'] = "'" . $where['value'] . "'";
+                }
+
+                if (!empty($where['column']) && is_null($where['value'])) {
+                    $where['value'] = 'NULL';
+                }
+                $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
             }
-            $whereConditions = $whereConditions . $where['column'] . ' ' . $where['operator'] . ' ' . $where['value'];
         }
 
         return $whereConditions;
@@ -705,6 +861,25 @@ class Builder
             $orderByCondition .= $key . ' ' . $orderBy;
             $index++;
         }
+        return $orderByCondition;
+    }
+
+    /**
+     * Build Group By
+     * @return string
+     */
+    protected function buildGroupBy()
+    {
+       return " GROUP BY " . implode(",", $this->groupBy);
+    }
+
+    /**
+     * Build Having
+     * @return string
+     */
+    protected function buildHaving()
+    {
+        return ' HAVING ' . $this->having;
     }
 
     /**
