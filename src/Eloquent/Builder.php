@@ -870,7 +870,10 @@ class Builder
      */
     protected function buildGroupBy()
     {
-       return " GROUP BY " . implode(",", $this->groupBy);
+        if (!empty($this->groupBy)) {
+            return " GROUP BY " . implode(",", $this->groupBy);
+        }
+        return "";
     }
 
     /**
@@ -879,7 +882,10 @@ class Builder
      */
     protected function buildHaving()
     {
-        return ' HAVING ' . $this->having;
+        if (!empty($this->having)) {
+            return ' HAVING ' . $this->having;
+        }
+        return "";
     }
 
     /**
